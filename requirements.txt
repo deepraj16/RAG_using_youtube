@@ -1,5 +1,5 @@
 gunicorn==22.0.0
-
+PYTHON_VERSION = 3.11.9
 flask==3.0.3
 flask-cors==4.0.1
 
