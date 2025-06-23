@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 10px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background elements */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: float 20s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-30px, -30px) rotate(120deg); }
+            66% { transform: translate(30px, -60px) rotate(240deg); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 
+                0 32px 64px rgba(0,0,0,0.15),
+                0 0 0 1px rgba(255,255,255,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24, #fd79a8);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: translateX(-100%) translateY(-100%); }
+            50% { transform: translateX(100%) translateY(100%); }
+        }
+
+        .header h1 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            margin-bottom: 15px;
+            font-weight: 800;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            opacity: 0.95;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .video-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: stretch;
+        }
+
+        .input-field {
+            flex: 1;
+            min-width: 250px;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.1),
+                0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .btn {
+            padding: 16px 28px;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            min-width: 140px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #ffecd2, #fcb69f);
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(252, 182, 159, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        }
+
+        .status {
+            padding: 16px 20px;
+            border-radius: 16px;
+            margin: 20px 0;
+            font-weight: 600;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .status.success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+        }
+
+        .status.error {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+        }
+
+        .status.info {
+            background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+            color: #0c5460;
+        }
+
+        .chat-section {
+            background: linear-gradient(135deg, rgba(248,249,250,0.8), rgba(255,255,255,0.8));
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .chat-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .chat-header h2 {
+            color: #2d3748;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+
+        .chat-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        /* Custom scrollbar */
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 3px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 3px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: messageSlide 0.5s ease-out;
+        }
+
+        @keyframes messageSlide {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.assistant {
+            text-align: left;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 85%;
+            padding: 16px 20px;
+            border-radius: 20px;
+            font-size: 15px;
+            line-height: 1.6;
+            font-weight: 500;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message.assistant .message-content {
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            color: #2d3748;
+            border-bottom-left-radius: 6px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .question-input {
+            display: flex;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .loading.show {
+            display: block;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #f1f5f9;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quick-questions {
+            margin: 25px 0;
+        }
+
+        .quick-questions h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .quick-btn {
+            display: inline-block;
+            padding: 10px 18px;
+            margin: 6px;
+            background: linear-gradient(135deg, #e2e8f0, #cbd5e0);
+            color: #2d3748;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .quick-btn:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        .video-info {
+            background: linear-gradient(135deg, rgba(248,249,250,0.9), rgba(255,255,255,0.9));
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .video-info h3 {
+            color: #2d3748;
+            margin-bottom: 12px;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+
+        .video-info p {
+            color: #4a5568;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .container {
+                margin: 0;
+                border-radius: 16px;
+                min-height: calc(100vh - 10px);
+            }
+
+            .header {
+                padding: 30px 20px;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .input-group {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .input-field {
+                min-width: unset;
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+                padding: 18px 20px;
+                font-size: 16px;
+            }
+
+            .message-content {
+                max-width: 95%;
+                font-size: 14px;
+                padding: 14px 16px;
+            }
+
+            .question-input {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .quick-btn {
+                display: block;
+                width: 100%;
+                margin: 8px 0;
+                text-align: center;
+                padding: 12px 16px;
+                font-size: 15px;
+            }
+
+            .chat-container {
+                max-height: 300px;
+                padding: 15px;
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+            }
+
+            .video-info {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 15px;
+            }
+
+            .chat-section {
+                padding: 20px;
+            }
+
+            .header {
+                padding: 25px 15px;
+            }
+
+            .input-field {
+                padding: 14px 16px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            .message-content {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+        }
+
+        /* Touch improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn:hover {
+                transform: none;
+            }
+            
+            .btn:active {
+                transform: scale(0.98);
+            }
+            
+            .quick-btn:hover {
+                transform: none;
+            }
+            
+            .quick-btn:active {
+                transform: scale(0.95);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 YouTube Video AI Assistant</h1>
+            <p>Ask questions about any YouTube video and get intelligent answers!</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Video Loading Section -->
+            <div class="video-section">
+                <h2 class="section-title">📺 Load YouTube Video</h2>
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="videoUrl" 
+                        class="input-field" 
+                        placeholder="Paste YouTube URL here (e.g., https://www.youtube.com/watch?v=...)"
+                    >
+                    <button id="loadVideoBtn" class="btn btn-primary">Load Video</button>
+                </div>
+                
+                <div id="videoStatus"></div>
+                <div id="videoInfo" style="display: none;"></div>
+            </div>
+
+            <!-- Chat Section -->
+            <div class="chat-section" id="chatSection" style="display: none;">
+                <div class="chat-header">
+                    <h2>💬 Ask Questions</h2>
+                    <p>Ask anything about the loaded video!</p>
+                </div>
+
+                <div class="quick-questions">
+                    <h3>Quick Questions:</h3>
+                    <button class="quick-btn" onclick="askQuickQuestion('Can you summarize this video?')">
+                        📝 Summarize Video
+                    </button>
+                    <button class="quick-btn" onclick="askQuickQuestion('What are the main points discussed?')">
+                        🎯 Main Points
+                    </button>
+                    <button class="quick-btn" onclick="askQuickQuestion('What topics are covered in this video?')">
+                        📚 Topics Covered
+                    </button>
+                    <button class="quick-btn" onclick="askQuickQuestion('Who is the target audience for this video?')">
+                        👥 Target Audience
+                    </button>
+                </div>
+
+                <div class="chat-container" id="chatContainer">
+                    <div class="message assistant">
+                        <div class="message-content">
+                            👋 Hi! I'm ready to answer questions about your video. What would you like to know?
+                        </div>
+                    </div>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    Processing your question...
+                </div>
+
+                <div class="question-input">
+                    <input 
+                        type="text" 
+                        id="questionInput" 
+                        class="input-field" 
+                        placeholder="Type your question here..."
+                        onkeypress="handleKeyPress(event)"
+                    >
+                    <button id="askBtn" class="btn btn-secondary">Ask Question</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentVideoId = null;
+        let isVideoInitialized = false;
+
+        // DOM elements
+        const videoUrlInput = document.getElementById('videoUrl');
+        const loadVideoBtn = document.getElementById('loadVideoBtn');
+        const videoStatus = document.getElementById('videoStatus');
+        const videoInfo = document.getElementById('videoInfo');
+        const chatSection = document.getElementById('chatSection');
+        const questionInput = document.getElementById('questionInput');
+        const askBtn = document.getElementById('askBtn');
+        const chatContainer = document.getElementById('chatContainer');
+        const loading = document.getElementById('loading');
+
+        // Event listeners
+        loadVideoBtn.addEventListener('click', loadVideo);
+        askBtn.addEventListener('click', askQuestion);
+
+        // Load video function
+        async function loadVideo() {
+            const videoUrl = videoUrlInput.value.trim();
+            
+            if (!videoUrl) {
+                showStatus('Please enter a YouTube URL', 'error');
+                return;
+            }
+
+            if (!videoUrl.includes('youtube.com/watch') && !videoUrl.includes('youtu.be/')) {
+                showStatus('Please enter a valid YouTube URL', 'error');
+                return;
+            }
+
+            setLoadingState(true, loadVideoBtn, 'Loading...');
+            
+            try {
+                const response = await fetch('/get_youtube_video_info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        video_id: videoUrl
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentVideoId = data.video_id;
+                    showStatus('✅ Video loaded successfully! You can now ask questions.', 'success');
+                    showVideoInfo(data);
+                    showChatSection();
+                    
+                    // Initialize video in background
+                    initializeVideo();
+                } else {
+                    showStatus(`❌ Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Network error: ${error.message}`, 'error');
+            } finally {
+                setLoadingState(false, loadVideoBtn, 'Load Video');
+            }
+        }
+
+        // Initialize video for faster queries
+        async function initializeVideo() {
+            try {
+                const response = await fetch('/initialize_video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    isVideoInitialized = true;
+                    showStatus('🚀 Video initialized! Questions will be answered faster now.', 'info');
+                }
+            } catch (error) {
+                console.log('Video initialization failed, but queries will still work');
+            }
+        }
+
+        // Ask question function
+        async function askQuestion() {
+            const question = questionInput.value.trim();
+            
+            if (!question) {
+                return;
+            }
+
+            if (!currentVideoId) {
+                showStatus('Please load a video first', 'error');
+                return;
+            }
+
+            // Add user message to chat
+            addMessage(question, 'user');
+            questionInput.value = '';
+            
+            // Show loading
+            loading.classList.add('show');
+            setLoadingState(true, askBtn, 'Thinking...');
+
+            try {
+                const response = await fetch('/ask_question', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    addMessage(data.answer, 'assistant');
+                } else {
+                    addMessage(`❌ Error: ${data.error}`, 'assistant');
+                }
+            } catch (error) {
+                addMessage(`❌ Network error: ${error.message}`, 'assistant');
+            } finally {
+                loading.classList.remove('show');
+                setLoadingState(false, askBtn, 'Ask Question');
+            }
+        }
+
+        // Quick question function
+        function askQuickQuestion(question) {
+            questionInput.value = question;
+            askQuestion();
+        }
+
+        // Handle Enter key press
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                askQuestion();
+            }
+        }
+
+        // Add message to chat
+        function addMessage(content, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.textContent = content;
+            
+            messageDiv.appendChild(messageContent);
+            chatContainer.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            videoStatus.innerHTML = `<div class="status ${type}">${message}</div>`;
+            
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    videoStatus.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        // Show video info
+        function showVideoInfo(data) {
+            videoInfo.innerHTML = `
+                <div class="video-info">
+                    <h3>📹 Video Information</h3>
+                    <p><strong>Video ID:</strong> ${data.video_id}</p>
+                    <p><strong>Status:</strong> ${data.status}</p>
+                    <p>${data.description}</p>
+                </div>
+            `;
+            videoInfo.style.display = 'block';
+        }
+
+        // Show chat section
+        function showChatSection() {
+            chatSection.style.display = 'block';
+            questionInput.focus();
+        }
+
+        // Set loading state for buttons
+        function setLoadingState(isLoading, button, loadingText) {
+            if (isLoading) {
+                button.disabled = true;
+                button.dataset.originalText = button.textContent;
+                button.textContent = loadingText;
+            } else {
+                button.disabled = false;
+                button.textContent = button.dataset.originalText || button.textContent;
+            }
+        }
+
+        // Focus on video URL input when page loads
+        window.addEventListener('load', () => {
+            videoUrlInput.focus();
+        });
+    </script>
+</body>
+</html>
