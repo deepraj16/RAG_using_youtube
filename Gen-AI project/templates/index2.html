@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'shimmer': 'shimmer 2.5s linear infinite',
+                        'bounce-slow': 'bounce 3s infinite',
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-20px)' }
+                        },
+                        shimmer: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(100%)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.95)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 20px rgba(0, 255, 255, 0.5)' },
+                            '100%': { boxShadow: '0 0 40px rgba(255, 0, 255, 0.8)' }
+                        }
+                    },
+                    backdropBlur: {
+                        xs: '2px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a0a2a 25%, #0f0520 50%, #2a0a1a 75%, #0a0a0f 100%);
+            background-attachment: fixed;
+        }
+        
+        .glass {
+            background: rgba(15, 5, 30, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.15);
+        }
+        
+        .glass-dark {
+            background: rgba(10, 5, 20, 0.9);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 0, 255, 0.1);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #00ffff, #ff00ff, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cyan-gradient {
+            background: linear-gradient(135deg, #00ffff 0%, #0080ff 50%, #00ffff 100%);
+        }
+
+        .magenta-gradient {
+            background: linear-gradient(135deg, #ff00ff 0%, #8000ff 50%, #ff00ff 100%);
+        }
+
+        .silver-gradient {
+            background: linear-gradient(135deg, #c0c0c0 0%, #a0a0a0 50%, #c0c0c0 100%);
+        }
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb347 50%, #ffd700 100%);
+        }
+
+        .shimmer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #ff00ff, #00ffff);
+        }
+
+        .video-thumbnail {
+            aspect-ratio: 16/9;
+            object-fit: cover;
+        }
+
+        .neon-border {
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4),
+                        inset 0 0 20px rgba(255, 0, 255, 0.2);
+        }
+
+        .hover-glow:hover {
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .text-shadow {
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-2 md:p-6">
+    <!-- Floating background elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-cyan-400/20 to-blue-500/20 rounded-full animate-float blur-3xl"></div>
+        <div class="absolute top-3/4 right-1/4 w-32 h-32 bg-gradient-to-r from-purple-400/20 to-pink-500/20 rounded-full animate-bounce-slow blur-2xl"></div>
+        <div class="absolute top-1/2 left-3/4 w-48 h-48 bg-gradient-to-r from-blue-500/20 to-purple-400/20 rounded-full animate-pulse-slow blur-3xl"></div>
+    </div>
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="glass rounded-3xl mb-8 p-8 md:p-12 text-center relative overflow-hidden animate-fade-in neon-border">
+            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10"></div>
+            <div class="relative z-10">
+                <h1 class="text-4xl md:text-6xl font-black gradient-text mb-4 drop-shadow-lg text-shadow animate-glow">
+                    🎥 YouTube AI Assistant
+                </h1>
+                <p class="text-lg md:text-xl text-gray-300 font-medium">
+                    Analyze videos with AI • Get instant answers • Discover insights
+                </p>
+            </div>
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent shimmer"></div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Left Column - Video Input -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Video Input Card -->
+                <div class="glass rounded-2xl p-6 animate-slide-up hover-glow transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 cyan-gradient rounded-xl flex items-center justify-center shadow-lg">
+                            <span class="text-black text-lg font-bold">📺</span>
+                        </div>
+                        <h2 class="text-2xl font-bold text-white text-shadow">Load Video</h2>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <input 
+                            type="text" 
+                            id="videoUrl" 
+                            class="w-full px-4 py-3 bg-black/60 border border-cyan-400/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all duration-300"
+                            placeholder="Paste YouTube URL here..."
+                        >
+                        <button 
+                            id="loadVideoBtn" 
+                            class="w-full px-6 py-3 cyan-gradient text-black font-bold rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-cyan-400/50 relative overflow-hidden"
+                        >
+                            <span class="relative z-10">Load Video</span>
+                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full transition-transform duration-1000 group-hover:translate-x-full"></div>
+                        </button>
+                    </div>
+                    
+                    <div id="videoStatus" class="mt-4"></div>
+                </div>
+
+                <!-- Video Info Card -->
+                <div id="videoInfoCard" class="glass rounded-2xl p-6 hidden animate-fade-in hover-glow transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center shadow-lg">
+                            <span class="text-black text-sm font-bold">✓</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white text-shadow">Video Loaded</h3>
+                    </div>
+                    
+                    <div id="videoThumbnail" class="mb-4"></div>
+                    <div id="videoDetails" class="space-y-2"></div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div id="quickActionsCard" class="glass rounded-2xl p-6 hidden animate-fade-in hover-glow transition-all duration-300">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2 text-shadow">
+                        <span class="text-xl">⚡</span>
+                        Quick Questions
+                    </h3>
+                    <div class="grid grid-cols-1 gap-3">
+                        <button class="quick-btn px-4 py-3 bg-gray-800/70 hover:bg-gray-700/70 border border-gray-600 hover:border-yellow-400 text-white text-sm font-medium rounded-xl transition-all duration-300 hover:scale-105 text-left flex items-center gap-3 hover:shadow-lg" onclick="askQuickQuestion('Can you summarize this video?')">
+                            <span class="text-lg">📝</span>
+                            <span>Summarize Video</span>
+                        </button>
+                        <button class="quick-btn px-4 py-3 bg-gray-800/70 hover:bg-gray-700/70 border border-gray-600 hover:border-yellow-400 text-white text-sm font-medium rounded-xl transition-all duration-300 hover:scale-105 text-left flex items-center gap-3 hover:shadow-lg" onclick="askQuickQuestion('What are the main points discussed?')">
+                            <span class="text-lg">🎯</span>
+                            <span>Main Points</span>
+                        </button>
+                        <button class="quick-btn px-4 py-3 bg-gray-800/70 hover:bg-gray-700/70 border border-gray-600 hover:border-yellow-400 text-white text-sm font-medium rounded-xl transition-all duration-300 hover:scale-105 text-left flex items-center gap-3 hover:shadow-lg" onclick="askQuickQuestion('What topics are covered?')">
+                            <span class="text-lg">📚</span>
+                            <span>Topics Covered</span>
+                        </button>
+                        <button class="quick-btn px-4 py-3 bg-gray-800/70 hover:bg-gray-700/70 border border-gray-600 hover:border-yellow-400 text-white text-sm font-medium rounded-xl transition-all duration-300 hover:scale-105 text-left flex items-center gap-3 hover:shadow-lg" onclick="askQuickQuestion('Who is the target audience?')">
+                            <span class="text-lg">👥</span>
+                            <span>Target Audience</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Chat Interface -->
+            <div class="lg:col-span-2">
+                <div id="chatSection" class="glass rounded-2xl p-6 h-full min-h-[600px] flex flex-col hidden animate-fade-in hover-glow transition-all duration-300">
+                    <!-- Chat Header -->
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-600">
+                        <div class="w-10 h-10 silver-gradient rounded-xl flex items-center justify-center shadow-lg">
+                            <span class="text-black text-lg font-bold">💬</span>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-white text-shadow">AI Chat</h2>
+                            <p class="text-gray-400 text-sm">Ask me anything about the video</p>
+                        </div>
+                        <div class="ml-auto">
+                            <div class="flex items-center gap-2 px-3 py-1 bg-green-500/20 border border-green-400/30 rounded-full">
+                                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                <span class="text-green-300 text-xs font-medium">Active</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Messages -->
+                    <div id="chatContainer" class="flex-1 space-y-4 mb-6 overflow-y-auto custom-scrollbar pr-2">
+                        <div class="flex items-start gap-3 animate-fade-in">
+                            <div class="w-8 h-8 silver-gradient rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                                <span class="text-black text-sm font-bold">🤖</span>
+                            </div>
+                            <div class="bg-gray-800/80 backdrop-blur-sm rounded-2xl rounded-tl-sm px-4 py-3 max-w-sm border border-gray-600 shadow-lg">
+                                <p class="text-gray-200 text-sm leading-relaxed">
+                                    👋 Hi! I've analyzed your video and I'm ready to answer any questions you have about it. What would you like to know?
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading Indicator -->
+                    <div id="loading" class="hidden mb-4">
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 silver-gradient rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                                <span class="text-black text-sm font-bold">🤖</span>
+                            </div>
+                            <div class="bg-gray-800/80 backdrop-blur-sm rounded-2xl rounded-tl-sm px-4 py-3 border border-gray-600">
+                                <div class="flex items-center gap-2 text-gray-400">
+                                    <div class="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"></div>
+                                    <div class="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                                    <div class="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                                    <span class="ml-2 text-sm">Thinking...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Input -->
+                    <div class="flex gap-3">
+                        <input 
+                            type="text" 
+                            id="questionInput" 
+                            class="flex-1 px-4 py-3 bg-black/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-300"
+                            placeholder="Ask a question about the video..."
+                            onkeypress="handleKeyPress(event)"
+                        >
+                        <button 
+                            id="askBtn" 
+                            class="px-6 py-3 silver-gradient text-black font-bold rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-gray-400/50 flex items-center gap-2"
+                        >
+                            <span class="text-black">Send</span>
+                            <span class="text-lg">🚀</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Initial State -->
+                <div id="initialState" class="glass rounded-2xl p-12 text-center animate-fade-in hover-glow transition-all duration-300">
+                    <div class="w-24 h-24 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse-slow shadow-lg border border-gray-500">
+                        <span class="text-white text-3xl">🎬</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4 text-shadow">Ready to Analyze</h3>
+                    <p class="text-gray-400 text-lg mb-8 max-w-md mx-auto">
+                        Load a YouTube video to start asking questions and get AI-powered insights about the content.
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-4 text-sm text-gray-500">
+                        <div class="flex items-center gap-2 px-3 py-1 bg-gray-800/50 rounded-full border border-gray-600">
+                            <span class="text-green-400">✓</span>
+                            <span>Video Summarization</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-3 py-1 bg-gray-800/50 rounded-full border border-gray-600">
+                            <span class="text-green-400">✓</span>
+                            <span>Content Analysis</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-3 py-1 bg-gray-800/50 rounded-full border border-gray-600">
+                            <span class="text-green-400">✓</span>
+                            <span>Q&A Chat</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentVideoId = null;
+        let isVideoInitialized = false;
+
+        // DOM elements
+        const videoUrlInput = document.getElementById('videoUrl');
+        const loadVideoBtn = document.getElementById('loadVideoBtn');
+        const videoStatus = document.getElementById('videoStatus');
+        const videoInfoCard = document.getElementById('videoInfoCard');
+        const videoThumbnail = document.getElementById('videoThumbnail');
+        const videoDetails = document.getElementById('videoDetails');
+        const quickActionsCard = document.getElementById('quickActionsCard');
+        const chatSection = document.getElementById('chatSection');
+        const initialState = document.getElementById('initialState');
+        const questionInput = document.getElementById('questionInput');
+        const askBtn = document.getElementById('askBtn');
+        const chatContainer = document.getElementById('chatContainer');
+        const loading = document.getElementById('loading');
+
+        // Event listeners
+        loadVideoBtn.addEventListener('click', loadVideo);
+        askBtn.addEventListener('click', askQuestion);
+
+        // Extract video ID from URL
+        function extractVideoId(url) {
+            const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
+            const match = url.match(regex);
+            return match ? match[1] : null;
+        }
+
+        // Load video function
+        async function loadVideo() {
+            const videoUrl = videoUrlInput.value.trim();
+            
+            if (!videoUrl) {
+                showStatus('Please enter a YouTube URL', 'error');
+                return;
+            }
+
+            const videoId = extractVideoId(videoUrl);
+            if (!videoId) {
+                showStatus('Please enter a valid YouTube URL', 'error');
+                return;
+            }
+
+            setLoadingState(true, loadVideoBtn, 'Loading...');
+            
+            try {
+                // Show video thumbnail immediately
+                showVideoThumbnail(videoId);
+                
+                const response = await fetch('/get_youtube_video_info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        video_id: videoUrl
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentVideoId = data.video_id;
+                    showStatus('✅ Video loaded successfully! You can now ask questions.', 'success');
+                    showVideoInfo(data, videoId);
+                    showChatSection();
+                    
+                    // Initialize video in background
+                    initializeVideo();
+                } else {
+                    showStatus(`❌ Error: ${data.error}`, 'error');
+                    hideVideoInfo();
+                }
+            } catch (error) {
+                showStatus(`❌ Network error: ${error.message}`, 'error');
+                hideVideoInfo();
+            } finally {
+                setLoadingState(false, loadVideoBtn, 'Load Video');
+            }
+        }
+
+        // Show video thumbnail
+        function showVideoThumbnail(videoId) {
+            const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+            videoThumbnail.innerHTML = `
+                <img src="${thumbnailUrl}" 
+                     alt="Video thumbnail" 
+                     class="w-full video-thumbnail rounded-xl shadow-lg border border-gray-600"
+                     onerror="this.src='https://img.youtube.com/vi/${videoId}/hqdefault.jpg'">
+            `;
+            videoInfoCard.classList.remove('hidden');
+        }
+
+        // Initialize video for faster queries
+        async function initializeVideo() {
+            try {
+                const response = await fetch('/initialize_video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    isVideoInitialized = true;
+                    showStatus('🚀 Video initialized! Questions will be answered faster now.', 'info');
+                }
+            } catch (error) {
+                console.log('Video initialization failed, but queries will still work');
+            }
+        }
+
+        // Ask question function
+        async function askQuestion() {
+            const question = questionInput.value.trim();
+            
+            if (!question) {
+                return;
+            }
+
+            if (!currentVideoId) {
+                showStatus('Please load a video first', 'error');
+                return;
+            }
+
+            // Add user message to chat
+            addMessage(question, 'user');
+            questionInput.value = '';
+            
+            // Show loading
+            loading.classList.remove('hidden');
+            setLoadingState(true, askBtn, 'Sending...');
+
+            try {
+                const response = await fetch('/ask_question', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    addMessage(data.answer, 'assistant');
+                } else {
+                    addMessage(`❌ Error: ${data.error}`, 'assistant');
+                }
+            } catch (error) {
+                addMessage(`❌ Network error: ${error.message}`, 'assistant');
+            } finally {
+                loading.classList.add('hidden');
+                setLoadingState(false, askBtn, 'Send');
+            }
+        }
+
+        // Quick question function
+        function askQuickQuestion(question) {
+            questionInput.value = question;
+            askQuestion();
+        }
+
+        // Handle Enter key press
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                askQuestion();
+            }
+        }
+
+        // Add message to chat
+        function addMessage(content, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'flex items-start gap-3 animate-fade-in';
+            
+            if (sender === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="ml-auto flex items-start gap-3 flex-row-reverse">
+                        <div class="w-8 h-8 gold-gradient rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                            <span class="text-black text-sm font-bold">👤</span>
+                        </div>
+                        <div class="gold-gradient rounded-2xl rounded-tr-sm px-4 py-3 max-w-sm shadow-lg">
+                            <p class="text-black text-sm leading-relaxed font-medium">${content}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="w-8 h-8 silver-gradient rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <span class="text-black text-sm font-bold">🤖</span>
+                    </div>
+                    <div class="bg-gray-800/80 backdrop-blur-sm rounded-2xl rounded-tl-sm px-4 py-3 max-w-lg border border-gray-600 shadow-lg">
+                        <p class="text-gray-200 text-sm leading-relaxed">${content}</p>
+                    </div>
+                `;
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const colors = {
+                success: 'from-green-600 to-emerald-700 border-green-500',
+                error: 'from-red-600 to-pink-700 border-red-500',
+                info: 'from-blue-600 to-purple-700 border-blue-500'
+            };
+            
+            videoStatus.innerHTML = `
+                <div class="mt-4 p-3 bg-gradient-to-r ${colors[type]} rounded-xl text-white text-sm font-medium animate-fade-in border shadow-lg">
+                    ${message}
+                </div>
+            `;
+            
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    videoStatus.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        // Show video info
+        function showVideoInfo(data, videoId) {
+            videoDetails.innerHTML = `
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Video ID:</span>
+                        <span class="text-white font-mono text-xs bg-gray-800 px-2 py-1 rounded border border-gray-600">${videoId}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Status:</span>
+                        <span class="text-green-400 font-medium">${data.status}</span>
+                    </div>
+                </div>
+            `;
+            
+            videoInfoCard.classList.remove('hidden');
+            quickActionsCard.classList.remove('hidden');
+        }
+
+        // Hide video info
+        function hideVideoInfo() {
+            videoInfoCard.classList.add('hidden');
+            quickActionsCard.classList.add('hidden');
+        }
+
+        // Show chat section
+        function showChatSection() {
+            chatSection.classList.remove('hidden');
+            initialState.classList.add('hidden');
+            questionInput.focus();
+        }
+
+        // Set loading state for buttons
+        function setLoadingState(isLoading, button, loadingText) {
+            if (isLoading) {
+                button.disabled = true;
+                button.dataset.originalText = button.textContent;
+                button.textContent = loadingText;
+                button.classList.add('opacity-75');
+            } else {
+                button.disabled = false;
+                button.textContent = button.dataset.originalText || button.textContent;
+                button.classList.remove('opacity-75');
+            }
+        }
+
+        // Focus on video URL input when page loads
+        window.addEventListener('load', () => {
+            videoUrlInput.focus();
+        });
+    </script>
+</body>
+</html>
